@@ -520,12 +520,17 @@ def upgrade_available(pkg, **kwargs):
     return pkg in list_upgrades()
 
 
-def upgrade(refresh=True, **kwargs):
+def upgrade(refresh=True, cleanup=False, **kwargs):
     """
     Upgrade outdated, unpinned brews.
 
     refresh
         Fetch the newest version of Homebrew and all formulae from GitHub before installing.
+
+    cleanup
+        Remove stale lock files and outdated downloads after upgrading.
+
+        .. versionadded:: 3002
 
     Returns a dictionary containing the changes:
 
@@ -562,6 +567,14 @@ def upgrade(refresh=True, **kwargs):
             "Problem encountered upgrading packages",
             info={"changes": ret, "result": result},
         )
+
+    if ret and cleanup:
+        result = _call_brew("cleanup", failhard=False)
+        if result["retcode"] != 0:
+            raise CommandExecutionError(
+                "Problem encountered cleaning up",
+                info={"changes": ret, "result": result},
+            )
 
     return ret
 
